@@ -2,3 +2,4 @@ reference.webp
 __pycache__/
 *.pyc
 .DS_Store
+audio/maxy_ref*.wav

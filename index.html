@@ -86,6 +86,15 @@
       font-variant-numeric: tabular-nums;
     }
     .count.bump { transform: scale(1.18); }
+
+    @keyframes idleSway {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-3px) rotate(0.6deg); }
+    }
+    @keyframes idleBlink {
+      0%, 92%, 100% { filter: brightness(1); }
+      94%, 96% { filter: brightness(0.6) contrast(1.2); }
+    }
     .face {
       width: clamp(120px, 32vw, 200px);
       height: clamp(120px, 32vw, 200px);
@@ -93,14 +102,15 @@
       object-fit: cover;
       box-shadow: 0 12px 40px rgba(0,0,0,0.45), inset 0 0 0 3px rgba(255,255,255,0.18);
       transition: transform 220ms cubic-bezier(.34,1.56,.64,1), opacity 200ms ease;
+      animation: idleSway 4.5s ease-in-out infinite, idleBlink 7s ease-in-out infinite;
     }
-    .face.pop { transform: scale(1.18) rotate(-3deg); }
-    .face.hidden { opacity: 0; transform: scale(0.5); }
+    .face.pop { transform: scale(1.18) rotate(-3deg); animation: none; }
+    .face.hidden { opacity: 0; transform: scale(0.5); animation: none; }
+    .face.dim { opacity: 0; }
 
-    .reset {
+    .corner-btn {
       position: fixed;
       top: max(14px, env(safe-area-inset-top));
-      right: max(14px, env(safe-area-inset-right));
       width: 44px;
       height: 44px;
       border-radius: 50%;
@@ -116,7 +126,11 @@
       -webkit-backdrop-filter: blur(6px);
       z-index: 5;
       overflow: hidden;
+      padding: 0;
+      font-family: inherit;
     }
+    .reset { right: max(14px, env(safe-area-inset-right)); }
+    .mute  { left: max(14px, env(safe-area-inset-left)); font-size: 18px; }
     .reset::before {
       content: "";
       position: absolute;
@@ -127,7 +141,7 @@
       transition: transform 0ms linear;
     }
     .reset.holding::before { transform: scaleX(1); transition: transform 1000ms linear; }
-    .reset span { position: relative; z-index: 1; }
+    .reset span, .mute span { position: relative; z-index: 1; }
 
     .collection {
       position: fixed;
@@ -166,7 +180,6 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      filter: grayscale(0%);
     }
     .slot.locked img { display: none; }
     .slot.unlocked {
@@ -256,6 +269,73 @@
       transform: translate(-50%, -50%) scale(1) rotate(0deg);
     }
 
+    #confetti {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 8;
+    }
+
+    .giant-emoji {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.2) rotate(-30deg);
+      font-size: clamp(220px, 60vw, 520px);
+      line-height: 1;
+      pointer-events: none;
+      z-index: 9;
+      opacity: 0;
+      transition: opacity 320ms ease, transform 600ms cubic-bezier(.34,1.56,.64,1);
+      filter: drop-shadow(0 30px 60px rgba(0,0,0,0.6));
+      user-select: none;
+    }
+    .giant-emoji.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    }
+    .giant-emoji.bounce {
+      animation: emojiBounce 1.6s ease-in-out;
+    }
+    @keyframes emojiBounce {
+      0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+      25% { transform: translate(-50%, -54%) scale(1.08) rotate(-4deg); }
+      50% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+      75% { transform: translate(-50%, -54%) scale(1.08) rotate(4deg); }
+    }
+
+    .combo {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, calc(-50% - 130px)) scale(1);
+      pointer-events: none;
+      z-index: 4;
+      font-weight: 900;
+      font-size: clamp(28px, 7vw, 56px);
+      color: #ffec5c;
+      text-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 24px rgba(255,200,30,0.6);
+      letter-spacing: -0.02em;
+      opacity: 0;
+      transition: opacity 200ms ease, transform 220ms cubic-bezier(.34,1.56,.64,1);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .combo.show {
+      opacity: 1;
+      transform: translate(-50%, calc(-50% - 150px)) scale(1.1);
+    }
+    .combo.rampage {
+      color: #ff7a3c;
+      text-shadow: 0 4px 20px rgba(0,0,0,0.7), 0 0 30px rgba(255,80,30,0.8);
+    }
+    .combo.maxrage {
+      color: #ff2e63;
+      text-shadow: 0 4px 20px rgba(0,0,0,0.8), 0 0 36px rgba(255,30,80,0.95);
+    }
+
     @keyframes shake {
       0%, 100% { transform: translate(0, 0); }
       20% { transform: translate(-4px, 2px); }
@@ -265,14 +345,15 @@
     }
     body.shake { animation: shake 180ms ease; }
     @media (prefers-reduced-motion: reduce) {
-      .count, body, .face, .message, .slot, .unlock-card { transition: none; animation: none; }
+      .count, body, .face, .message, .slot, .unlock-card, .combo {
+        transition: none; animation: none;
+      }
     }
   </style>
 </head>
 <body>
-  <button class="reset" id="reset" aria-label="Hold to reset">
-    <span>↻</span>
-  </button>
+  <button class="corner-btn mute" id="mute" aria-label="Toggle sound"><span id="muteIcon">🔊</span></button>
+  <button class="corner-btn reset" id="reset" aria-label="Hold to reset"><span>↻</span></button>
 
   <button class="tap-target" id="tap" aria-label="Tap to tally"></button>
 
@@ -281,6 +362,8 @@
     <div class="count" id="count" aria-live="polite" aria-atomic="true">0</div>
     <img class="face hidden" id="face" alt="" />
   </div>
+
+  <div class="combo" id="combo"></div>
 
   <div class="hint">tap anywhere · hold ↻ to reset</div>
 
@@ -294,29 +377,39 @@
     <div class="milestone" id="unlockMilestone"></div>
   </div>
 
+  <div class="giant-emoji" id="giantEmoji" aria-hidden="true"></div>
+
+  <canvas id="confetti"></canvas>
+
   <script>
     const STORAGE_KEY = "maxOMeterCount";
     const UNLOCKED_KEY = "maxOMeterUnlocked";
+    const MUTED_KEY = "maxOMeterMuted";
 
     const countEl = document.getElementById("count");
     const faceEl = document.getElementById("face");
     const tapEl = document.getElementById("tap");
     const resetEl = document.getElementById("reset");
+    const muteEl = document.getElementById("mute");
+    const muteIconEl = document.getElementById("muteIcon");
     const messageEl = document.getElementById("message");
     const collectionEl = document.getElementById("collection");
     const unlockCardEl = document.getElementById("unlockCard");
     const unlockImgEl = document.getElementById("unlockImg");
     const unlockMilestoneEl = document.getElementById("unlockMilestone");
+    const comboEl = document.getElementById("combo");
+    const confettiCanvas = document.getElementById("confetti");
+    const giantEmojiEl = document.getElementById("giantEmoji");
 
     const milestones = [
-      { n: 1,    img: "images/face-001.png",  text: "First offence. It begins." },
-      { n: 10,   img: "images/face-010.png",  text: "Double digits already, Max." },
-      { n: 25,   img: "images/face-025.png",  text: "Prolific." },
-      { n: 50,   img: "images/face-050.png",  text: "Josh, have you considered blocking him?" },
-      { n: 100,  img: "images/face-100.png",  text: "Certified menace." },
-      { n: 250,  img: "images/face-250.png",  text: "A quarter-millennium of Max." },
-      { n: 500,  img: "images/face-500.png",  text: "You are a saint, Josh." },
-      { n: 1000, img: "images/face-1000.png", text: "At this point it's a lifestyle." },
+      { n: 1,    img: "images/face-001.png",  voice: "audio/voice-001.mp3",  text: "First offence. It begins." },
+      { n: 10,   img: "images/face-010.png",  voice: "audio/voice-010.mp3",  text: "Double digits already, Max." },
+      { n: 25,   img: "images/face-025.png",  voice: "audio/voice-025.mp3",  text: "Prolific." },
+      { n: 50,   img: "images/face-050.png",  voice: "audio/voice-050.mp3",  text: "Josh, have you considered blocking him?" },
+      { n: 100,  img: "images/face-100.png",  voice: "audio/voice-100.mp3",  text: "Certified menace." },
+      { n: 250,  img: "images/face-250.png",  voice: "audio/voice-250.mp3",  text: "A quarter-millennium of Max." },
+      { n: 500,  img: "images/face-500.png",  voice: "audio/voice-500.mp3",  text: "You are a saint, Josh." },
+      { n: 1000, img: "images/face-1000.png", voice: "audio/voice-1000.mp3", text: "At this point it's a lifestyle." },
     ];
 
     const randomQuips = [
@@ -329,6 +422,23 @@
       "Tap. Sigh. Repeat.",
     ];
 
+    const easterEggs = {
+      69:   { text: "Nice.",                                   emoji: "🍆" },
+      111:  { text: "Triple ones. Make a wish." },
+      123:  { text: "Easy as 1-2-3 annoyances." },
+      314:  { text: "Mathematically annoying.",                emoji: "🥧" },
+      404:  { text: "Patience not found." },
+      420:  { text: "Blaze. It.",                              emoji: "🌿" },
+      555:  { text: "Repeat offender." },
+      666:  { text: "Demonic. Frankly on-brand for Max.",      emoji: "😈" },
+      777:  { text: "Unlucky for some. Especially you.",       emoji: "🎰" },
+      911:  { text: "Send help." },
+      999:  { text: "So close to four digits." },
+      1111: { text: "Make another wish.",                      emoji: "⭐" },
+      1234: { text: "Conveniently sequential annoyance." },
+      1337: { text: "Elite-level menace." },
+    };
+
     let count = parseInt(localStorage.getItem(STORAGE_KEY) || "0", 10);
     if (!Number.isFinite(count) || count < 0) count = 0;
 
@@ -337,6 +447,8 @@
       const raw = JSON.parse(localStorage.getItem(UNLOCKED_KEY) || "[]");
       if (Array.isArray(raw)) raw.forEach(n => unlocked.add(Number(n)));
     } catch {}
+
+    let muted = localStorage.getItem(MUTED_KEY) === "1";
 
     function persistUnlocked() {
       localStorage.setItem(UNLOCKED_KEY, JSON.stringify([...unlocked]));
@@ -411,13 +523,194 @@
     }
 
     let messageTimer = null;
-    function showMessage(text) {
+    function showMessage(text, ms = 2000) {
       messageEl.textContent = text;
       messageEl.classList.add("show");
       clearTimeout(messageTimer);
-      messageTimer = setTimeout(() => messageEl.classList.remove("show"), 2000);
+      messageTimer = setTimeout(() => messageEl.classList.remove("show"), ms);
     }
 
+    let giantEmojiTimer = null;
+    function showGiantEmoji(emoji) {
+      giantEmojiEl.textContent = emoji;
+      giantEmojiEl.classList.remove("show", "bounce");
+      void giantEmojiEl.offsetWidth;
+      giantEmojiEl.classList.add("show", "bounce");
+      if (navigator.vibrate) navigator.vibrate([20, 40, 20, 40, 20]);
+      clearTimeout(giantEmojiTimer);
+      giantEmojiTimer = setTimeout(() => giantEmojiEl.classList.remove("show", "bounce"), 2800);
+    }
+
+    /* ---------- Audio ---------- */
+    let audioCtx = null;
+    function ensureCtx() {
+      if (!audioCtx) {
+        try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+        catch {}
+      }
+      if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+    }
+
+    function playTapSound(combo) {
+      if (muted) return;
+      ensureCtx();
+      if (!audioCtx) return;
+      const t = audioCtx.currentTime;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      const baseFreq = 520 + Math.min(combo, 30) * 18 + (Math.random() * 60 - 30);
+      o.frequency.value = baseFreq;
+      o.type = "triangle";
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.18, t + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(t); o.stop(t + 0.1);
+    }
+
+    function playFanfare() {
+      if (muted) return;
+      ensureCtx();
+      if (!audioCtx) return;
+      const t0 = audioCtx.currentTime;
+      const notes = [523.25, 659.25, 783.99, 1046.5, 1318.5];
+      notes.forEach((freq, i) => {
+        const t = t0 + i * 0.08;
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.frequency.value = freq;
+        o.type = "triangle";
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.22, t + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(t); o.stop(t + 0.4);
+      });
+    }
+
+    const voiceCache = {};
+    function playVoice(m) {
+      if (muted || !m.voice) return;
+      let a = voiceCache[m.n];
+      if (!a) {
+        a = new Audio(m.voice);
+        a.preload = "auto";
+        voiceCache[m.n] = a;
+      }
+      try {
+        a.currentTime = 0;
+        const p = a.play();
+        if (p) p.catch(() => {});
+      } catch {}
+    }
+
+    function setMuted(v) {
+      muted = v;
+      localStorage.setItem(MUTED_KEY, muted ? "1" : "0");
+      muteIconEl.textContent = muted ? "🔇" : "🔊";
+      muteEl.setAttribute("aria-pressed", String(muted));
+    }
+    setMuted(muted);
+
+    /* ---------- Confetti ---------- */
+    const ctx = confettiCanvas.getContext("2d");
+    let dpr = window.devicePixelRatio || 1;
+    function resizeCanvas() {
+      dpr = window.devicePixelRatio || 1;
+      confettiCanvas.width = window.innerWidth * dpr;
+      confettiCanvas.height = window.innerHeight * dpr;
+      confettiCanvas.style.width = window.innerWidth + "px";
+      confettiCanvas.style.height = window.innerHeight + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    let particles = [];
+    let confettiRunning = false;
+    const CONFETTI_COLORS = ["#ff3b3b","#ffec5c","#3bff8e","#5ccfff","#c45cff","#ff7a3c","#ffffff"];
+    function spawnConfetti(n = 80) {
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      for (let i = 0; i < n; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 4 + Math.random() * 9;
+        particles.push({
+          x: cx + (Math.random() - 0.5) * 20,
+          y: cy + (Math.random() - 0.5) * 20,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 3,
+          w: 6 + Math.random() * 8,
+          h: 8 + Math.random() * 10,
+          rot: Math.random() * Math.PI,
+          vrot: (Math.random() - 0.5) * 0.4,
+          color: CONFETTI_COLORS[(Math.random() * CONFETTI_COLORS.length) | 0],
+          life: 0,
+        });
+      }
+      if (!confettiRunning) {
+        confettiRunning = true;
+        requestAnimationFrame(stepConfetti);
+      }
+    }
+    function stepConfetti() {
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      const next = [];
+      for (const p of particles) {
+        p.vy += 0.32;
+        p.vx *= 0.995;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rot += p.vrot;
+        p.life += 1;
+        if (p.y < window.innerHeight + 40 && p.life < 280) {
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = Math.max(0, 1 - p.life / 280);
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx.restore();
+          next.push(p);
+        }
+      }
+      particles = next;
+      if (particles.length > 0) {
+        requestAnimationFrame(stepConfetti);
+      } else {
+        confettiRunning = false;
+        ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      }
+    }
+
+    /* ---------- Combo ---------- */
+    let combo = 0;
+    let lastTapAt = 0;
+    const COMBO_WINDOW_MS = 550;
+    let comboTimer = null;
+    function showCombo(text, kind) {
+      comboEl.textContent = text;
+      comboEl.classList.remove("show", "rampage", "maxrage");
+      void comboEl.offsetWidth;
+      comboEl.classList.add("show");
+      if (kind) comboEl.classList.add(kind);
+      clearTimeout(comboTimer);
+      comboTimer = setTimeout(() => comboEl.classList.remove("show"), 900);
+    }
+    function updateCombo() {
+      const now = performance.now();
+      if (now - lastTapAt < COMBO_WINDOW_MS) {
+        combo += 1;
+      } else {
+        combo = 1;
+      }
+      lastTapAt = now;
+      if (combo >= 25) showCombo("MAX RAGE!", "maxrage");
+      else if (combo >= 10) showCombo("RAMPAGE!", "rampage");
+      else if (combo >= 3) showCombo("x" + combo);
+    }
+
+    /* ---------- Unlock ---------- */
     let unlockTimer = null;
     function playUnlock(m, isReplay) {
       unlockImgEl.src = m.img;
@@ -426,9 +719,20 @@
       unlockCardEl.classList.remove("show");
       void unlockCardEl.offsetWidth;
       unlockCardEl.classList.add("show");
+      faceEl.classList.add("dim");
       clearTimeout(unlockTimer);
-      unlockTimer = setTimeout(() => unlockCardEl.classList.remove("show"), isReplay ? 1400 : 2200);
+      unlockTimer = setTimeout(() => {
+        unlockCardEl.classList.remove("show");
+        faceEl.classList.remove("dim");
+      }, isReplay ? 1400 : 2400);
       if (navigator.vibrate) navigator.vibrate(isReplay ? 8 : [30, 30, 60]);
+      if (!isReplay) {
+        spawnConfetti(110);
+        playFanfare();
+      } else {
+        spawnConfetti(40);
+      }
+      playVoice(m);
     }
 
     function bump() {
@@ -461,6 +765,8 @@
       updateBackground(count);
       renderCollection();
       bump();
+      updateCombo();
+      playTapSound(combo);
 
       if (newFaceUnlocked) {
         renderFace();
@@ -469,7 +775,12 @@
         faceEl.classList.add("pop");
         setTimeout(() => faceEl.classList.remove("pop"), 240);
         playUnlock(justHit, false);
-        setTimeout(() => showMessage(justHit.text), 2300);
+        setTimeout(() => showMessage(justHit.text), 2500);
+      } else if (easterEggs[count]) {
+        const egg = easterEggs[count];
+        if (egg.emoji) showGiantEmoji(egg.emoji);
+        showMessage(egg.text, 2600);
+        spawnConfetti(50);
       } else if (count > 0 && count % 25 === 0) {
         showMessage(randomQuips[Math.floor(Math.random() * randomQuips.length)]);
       }
@@ -477,15 +788,26 @@
 
     tapEl.addEventListener("click", (e) => {
       e.preventDefault();
+      ensureCtx();
       increment();
     });
 
     document.addEventListener("keydown", (e) => {
-      if (e.target === resetEl) return;
+      if (e.target === resetEl || e.target === muteEl) return;
       if (e.code === "Space" || e.key === " ") {
         e.preventDefault();
+        ensureCtx();
         increment();
+      } else if (e.key && e.key.toLowerCase() === "m") {
+        setMuted(!muted);
       }
+    });
+
+    muteEl.addEventListener("click", (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      ensureCtx();
+      setMuted(!muted);
     });
 
     let holdTimer = null;
@@ -496,6 +818,7 @@
       holdTimer = setTimeout(() => {
         count = 0;
         unlocked = new Set();
+        combo = 0;
         localStorage.setItem(STORAGE_KEY, "0");
         persistUnlocked();
         render();
