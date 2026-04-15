@@ -107,6 +107,7 @@
     .face.pop { transform: scale(1.18) rotate(-3deg); animation: none; }
     .face.hidden { opacity: 0; transform: scale(0.5); animation: none; }
     .face.dim { opacity: 0; }
+    .face.unlocking { opacity: 0 !important; transition: none !important; animation: none; }
 
     .corner-btn {
       position: fixed;
@@ -723,7 +724,7 @@
       clearTimeout(unlockTimer);
       unlockTimer = setTimeout(() => {
         unlockCardEl.classList.remove("show");
-        faceEl.classList.remove("dim");
+        faceEl.classList.remove("dim", "unlocking");
       }, isReplay ? 1400 : 2400);
       if (navigator.vibrate) navigator.vibrate(isReplay ? 8 : [30, 30, 60]);
       if (!isReplay) {
@@ -769,8 +770,10 @@
       playTapSound(combo);
 
       if (newFaceUnlocked) {
+        // Snap to invisible BEFORE swapping src so the old face never
+        // flashes between the swap and the dim transition kicking in.
+        faceEl.classList.add("unlocking");
         renderFace();
-        faceEl.classList.remove("pop");
         void faceEl.offsetWidth;
         faceEl.classList.add("pop");
         setTimeout(() => faceEl.classList.remove("pop"), 240);
