@@ -13,9 +13,9 @@ REF_AUDIO = PROJECT / "audio" / "maxy_ref.wav"
 OUT_DIR = PROJECT / "audio"
 
 REF_TEXT = (
-    "this is me talking I'll read this while you sort that I'll start "
-    "building the non voice fun stuff confetti combo system easter eggs "
-    "web audio tap sounds"
+    "is a test, testing the voice note to see if we get a good reference. "
+    "It's more active and expressionist and it's a bit more exciting when "
+    "recorded as it is now."
 )
 
 # Per modal-tts.md tips:
